@@ -3,7 +3,7 @@ variable "availability_zone" {
   description = "availability zone used for the demo, based on AWS region"
   default = {
     us-east-1 = "us-east-1a"
-    us-east-2 = "us-east-2a"
+    us-east-2 = "us-east-2b"
   }
 }
 
