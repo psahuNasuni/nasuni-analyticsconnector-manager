@@ -1,12 +1,4 @@
 
-variable "availability_zone" {
-  description = "availability zone used for the demo, based on AWS region"
-  default = {
-    us-east-1 = "us-east-1a"
-    us-east-2 = "us-east-2a"
-  }
-}
-
 variable "instance_type" {
   description = "type of instances to provision"
   default="m4.large"
@@ -51,5 +43,12 @@ variable "git_repo_ui" {
   }
 }
 variable "user_vpc_id" {
+  default=""
+}
+
+variable "user_subnet_id" {
+  default=""
+}
+variable "subnet_availability_zone" {
   default=""
 }

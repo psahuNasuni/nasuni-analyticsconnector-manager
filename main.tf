@@ -37,12 +37,12 @@ data "aws_subnet" "example" {
 
 resource "aws_instance" "NACScheduler" {
   ami = data.aws_ami.ubuntu.id
-  availability_zone = "${lookup(var.availability_zone, data.aws_region.current.name)}"
+  availability_zone = var.subnet_availability_zone
   instance_type = "${var.instance_type}"
   key_name = "${var.aws_key}"
   associate_public_ip_address = true
   source_dest_check = false
-  subnet_id   = element(tolist(data.aws_subnet_ids.FetchingSubnetIDs.ids),0) 
+  subnet_id = var.user_subnet_id != "" ? var.user_subnet_id : element(tolist(data.aws_subnet_ids.FetchingSubnetIDs.ids),0) 
   root_block_device {
     volume_size = var.volume_size
   }
