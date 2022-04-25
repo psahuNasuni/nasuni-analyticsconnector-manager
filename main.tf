@@ -40,7 +40,8 @@ resource "aws_instance" "NACScheduler" {
   availability_zone = var.subnet_availability_zone
   instance_type = "${var.instance_type}"
   key_name = "${var.aws_key}"
-  associate_public_ip_address = true
+  associate_public_ip_address = var.use_private_ip != "Y" ? true : false
+  # associate_public_ip_address = true
   source_dest_check = false
   subnet_id = var.user_subnet_id != "" ? var.user_subnet_id : element(tolist(data.aws_subnet_ids.FetchingSubnetIDs.ids),0) 
   root_block_device {
@@ -182,7 +183,8 @@ data "local_file" "aws_conf_secret_key" {
 
   connection {
     type        = "ssh"
-    host        = aws_instance.NACScheduler.public_ip
+    # host        = aws_instance.NACScheduler.public_ip 
+    host = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
     user        = "ubuntu"
     private_key = file("./${var.pem_key_file}")
   }
@@ -200,9 +202,9 @@ resource "null_resource" "Inatall_APACHE" {
       "sudo service apache2 restart",
       "echo '@@@@@@@@@@@@@@@@@@@@@ FINISHED - Inastall WEB Server             @@@@@@@@@@@@@@@@@@@@@@@'",
       "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED  - Deployment of SearchUI Web Site @@@@@@@@@@@@@@@@@@@@@@@'",
-      "git clone https://github.com/${var.github_organization}/${var.git_repo_ui["${var.github_organization}"]}.git",
-      "sudo chmod 755 ${var.git_repo_ui["${var.github_organization}"]}/SearchUI_Web/*",
-      "cd ${var.git_repo_ui["${var.github_organization}"]}",
+      "git clone https://github.com/${var.github_organization}/${var.git_repo_ui}.git",
+      "sudo chmod 755 ${var.git_repo_ui}/SearchUI_Web/*",
+      "cd ${var.git_repo_ui}",
       "terraform init",
       "terraform apply -auto-approve",
       "cd SearchUI_Web",
@@ -215,7 +217,8 @@ resource "null_resource" "Inatall_APACHE" {
   }
   connection {
     type        = "ssh"
-    host        = aws_instance.NACScheduler.public_ip
+    # host        = aws_instance.NACScheduler.public_ip
+    host = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
     user        = "ubuntu"
     private_key = file("./${var.pem_key_file}")
   }

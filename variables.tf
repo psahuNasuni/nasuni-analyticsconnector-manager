@@ -35,12 +35,8 @@ variable "github_organization" {
   default = "nasuni-labs"
 }
 variable "git_repo_ui" {
-  type = map
   description = "git_repo_ui specific to certain repos"
-  default = {
-    psahuNasuni = "SearchUI"
-    nasuni-labs = "nasuni-opensearch-userinterface"
-  }
+  default = "nasuni-opensearch-userinterface"
 }
 variable "user_vpc_id" {
   default=""
