@@ -48,3 +48,6 @@ variable "user_subnet_id" {
 variable "subnet_availability_zone" {
   default=""
 }
+variable "use_private_ip" {
+  default=""
+}
