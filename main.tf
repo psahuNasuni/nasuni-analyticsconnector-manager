@@ -234,5 +234,5 @@ resource "null_resource" "cleanup_temp_files" {
 }
 
 output "Nasuni-SearchUI-Web-URL" {
-  value = "http://${aws_instance.NACScheduler.public_ip}/index.html"
+    value = var.use_private_ip != "Y" ? "http://${aws_instance.NACScheduler.public_ip}/index.html" : "http://${aws_instance.NACScheduler.private_ip}/index.html"
 }
