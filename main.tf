@@ -35,6 +35,36 @@ data "aws_subnet" "example" {
  id  = each.value
 }
 
+resource "aws_instance" "Bastion_NACScheduler" {
+  
+  count = var.use_private_ip != "Y" ? 0 : 1
+  
+  ami = data.aws_ami.ubuntu.id
+  availability_zone = var.public_subnet_availability_zone
+  instance_type = "${var.instance_type}"
+  key_name = "${var.aws_key}"
+  associate_public_ip_address = true
+  source_dest_check = false
+  subnet_id = var.public_subnet_id 
+  root_block_device {
+    volume_size = var.volume_size
+  }
+  vpc_security_group_ids = [ aws_security_group.BastionHost_SecurityGroup.id ]
+  tags = {
+    Name            = "Bastion_${var.nac_scheduler_name}"
+    Application     = "Nasuni Analytics Connector with Elasticsearch"
+    Developer       = "Nasuni"
+    PublicationType = "Nasuni Labs"
+    Version         = "V 0.1"
+
+  }
+
+depends_on = [
+  data.local_file.aws_conf_access_key,
+  data.local_file.aws_conf_secret_key,
+  aws_instance.NACScheduler 
+]
+}
 resource "aws_instance" "NACScheduler" {
   ami = data.aws_ami.ubuntu.id
   availability_zone = var.subnet_availability_zone
@@ -60,7 +90,57 @@ resource "aws_instance" "NACScheduler" {
 depends_on = [
   data.local_file.aws_conf_access_key,
   data.local_file.aws_conf_secret_key,
+  
 ]
+}
+
+resource "aws_security_group" "BastionHost_SecurityGroup" {
+  name        = "nasuni-labs-SG-BHost-${random_id.unique_sg_id.dec}"
+  description = "Allow adinistrators to access HTTP and SSH service in instance"
+  vpc_id      = data.aws_vpc.VPCtoBeUsed.id
+
+
+ # count = min(length(var.ingress_ports))
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
+  }
+
+    ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
+  }
+
+      ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
+  }
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
+  }
+  egress {
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
+    cidr_blocks     = ["0.0.0.0/0"]
+  }
+   tags = {
+    Name            = "SecurityGroup for Instance -BHost ${var.nac_scheduler_name}"
+    Application     = "Nasuni Analytics Connector with Elasticsearch"
+    Developer       = "Nasuni"
+    PublicationType = "Nasuni Labs"
+    Version         = "V 0.1"
+
+  }
 }
 
 resource "aws_security_group" "nasunilabsSecurityGroup" {
@@ -234,5 +314,5 @@ resource "null_resource" "cleanup_temp_files" {
 }
 
 output "Nasuni-SearchUI-Web-URL" {
-    value = var.use_private_ip != "Y" ? "http://${aws_instance.NACScheduler.public_ip}/index.html" : "http://${aws_instance.NACScheduler.private_ip}/index.html"
+  value = "http://${aws_instance.NACScheduler.public_ip}/index.html"
 }
