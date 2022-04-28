@@ -23,12 +23,12 @@ add_ip_to_sec_grp() {
 	NEW_CIDR="${LOCAL_IP}"/32
 	echo "INFO ::: NEW_CIDR :- ${NEW_CIDR}"
 	if [ "$NAC_SCHEDULER_NAME" != "" ]; then
-		SECURITY_GROUP_ID=$(aws ec2 describe-instances --query "Reservations[].Instances[].{Name:Tags[?Key=='Name']|[0].Value,Status:State.Name,PublicIP:PublicIpAddress,SecurityGroups:SecurityGroups[*]}" --filters "Name=tag:Name,Values='$NAC_SCHEDULER_NAME'" "Name=instance-state-name,Values=running" --region $AWS_REGION --profile "${AWS_PROFILE}" | grep -e "GroupId" | cut -d":" -f 2 | tr -d '"')
+		SECURITY_GROUP_ID=$(aws ec2 describe-instances --query "Reservations[].Instances[].{Name:Tags[?Key=='Name']|[0].Value,Status:State.Name,PublicIP:PublicIpAddress,SecurityGroups:SecurityGroups[*]}" --filters "Name=tag:Name,Values='$NAC_SCHEDULER_NAME'" "Name=instance-state-name,Values=running" --region "${AWS_REGION}" --profile "${AWS_PROFILE}" | grep -e "GroupId" | cut -d":" -f 2 | tr -d '"')
 		echo $SECURITY_GROUP_ID
 		echo "INFO ::: Security group of $NAC_SCHEDULER_NAME is $SECURITY_GROUP_ID"
 	else
 		echo "INFO ::: NAC Scheduler Instance $NAC_SCHEDULER_NAME is present .So fetching its security group . . . . . "
-		SECURITY_GROUP_ID=`aws ec2 describe-instances --query "Reservations[].Instances[].{Name:Tags[?Key=='Name']|[0].Value,Status:State.Name,PublicIP:PublicIpAddress,SecurityGroups:SecurityGroups[*]}" --filters "Name=tag:Name,Values='NACScheduler'" "Name=instance-state-name,Values=running" --region $AWS_REGION  --profile "${AWS_PROFILE}" | grep -e "GroupId" | cut -d":" -f 2 | tr -d '"'`
+		SECURITY_GROUP_ID=`aws ec2 describe-instances --query "Reservations[].Instances[].{Name:Tags[?Key=='Name']|[0].Value,Status:State.Name,PublicIP:PublicIpAddress,SecurityGroups:SecurityGroups[*]}" --filters "Name=tag:Name,Values='NACScheduler'" "Name=instance-state-name,Values=running" --region "${AWS_REGION}"  --profile "${AWS_PROFILE}" | grep -e "GroupId" | cut -d":" -f 2 | tr -d '"'`
 		echo "INFO ::: Security group of NAC Scheduler Instance $NAC_SCHEDULER_NAME is $SECURITY_GROUP_ID"
 	# else
 	# 	echo "INFO ::: NAC Scheduler Instance $NAC_SCHEDULER_NAME is Not present. "
@@ -47,5 +47,7 @@ add_ip_to_sec_grp() {
 	fi
 
 }
+
+echo "############## UPDATING. SG of . $NAC_SCHEDULER_IP_ADDR ::: $NAC_SCHEDULER_NAME. . . ###############"
 
 add_ip_to_sec_grp $NAC_SCHEDULER_IP_ADDR $NAC_SCHEDULER_NAME $AWS_REGION $AWS_PROFILE

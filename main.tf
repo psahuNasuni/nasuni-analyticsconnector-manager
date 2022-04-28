@@ -19,7 +19,7 @@ data "aws_vpc" "default" {
 }
 
 resource "random_id" "unique_sg_id" {
-  byte_length = 3
+  byte_length = 2
 }
 
 
@@ -36,22 +36,21 @@ data "aws_subnet" "example" {
 }
 
 resource "aws_instance" "Bastion_NACScheduler" {
-  
   count = var.use_private_ip != "Y" ? 0 : 1
   
   ami = data.aws_ami.ubuntu.id
-  availability_zone = var.public_subnet_availability_zone
+  availability_zone = var.user_public_subnet_availability_zone
   instance_type = "${var.instance_type}"
   key_name = "${var.aws_key}"
   associate_public_ip_address = true
   source_dest_check = false
-  subnet_id = var.public_subnet_id 
+  subnet_id = var.user_public_subnet_id 
   root_block_device {
     volume_size = var.volume_size
   }
-  vpc_security_group_ids = [ aws_security_group.BastionHost_SecurityGroup.id ]
+  vpc_security_group_ids = [ aws_security_group.BastionHost_SecurityGroup[count.index].id ]
   tags = {
-    Name            = "Bastion_${var.nac_scheduler_name}"
+    Name            = "${var.nac_scheduler_name}_Bastion_Host"
     Application     = "Nasuni Analytics Connector with Elasticsearch"
     Developer       = "Nasuni"
     PublicationType = "Nasuni Labs"
@@ -62,6 +61,7 @@ resource "aws_instance" "Bastion_NACScheduler" {
 depends_on = [
   data.local_file.aws_conf_access_key,
   data.local_file.aws_conf_secret_key,
+  aws_security_group.BastionHost_SecurityGroup,
   aws_instance.NACScheduler 
 ]
 }
@@ -71,13 +71,12 @@ resource "aws_instance" "NACScheduler" {
   instance_type = "${var.instance_type}"
   key_name = "${var.aws_key}"
   associate_public_ip_address = var.use_private_ip != "Y" ? true : false
-  # associate_public_ip_address = true
   source_dest_check = false
   subnet_id = var.user_subnet_id != "" ? var.user_subnet_id : element(tolist(data.aws_subnet_ids.FetchingSubnetIDs.ids),0) 
   root_block_device {
     volume_size = var.volume_size
   }
-  vpc_security_group_ids = [ aws_security_group.nasunilabsSecurityGroup.id ]
+  vpc_security_group_ids = [ aws_security_group.NACSchedulerSecurityGroup.id ]
   tags = {
     Name            = var.nac_scheduler_name
     Application     = "Nasuni Analytics Connector with Elasticsearch"
@@ -90,16 +89,15 @@ resource "aws_instance" "NACScheduler" {
 depends_on = [
   data.local_file.aws_conf_access_key,
   data.local_file.aws_conf_secret_key,
-  
+  aws_security_group.NACSchedulerSecurityGroup
 ]
 }
 
 resource "aws_security_group" "BastionHost_SecurityGroup" {
-  name        = "nasuni-labs-SG-BHost-${random_id.unique_sg_id.dec}"
+  count = var.use_private_ip != "Y" ? 0 : 1
+  name        = "nasuni-labs-SG-BHost-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
   description = "Allow adinistrators to access HTTP and SSH service in instance"
   vpc_id      = data.aws_vpc.VPCtoBeUsed.id
-
-
  # count = min(length(var.ingress_ports))
   ingress {
     from_port   = 22
@@ -134,7 +132,7 @@ resource "aws_security_group" "BastionHost_SecurityGroup" {
     cidr_blocks     = ["0.0.0.0/0"]
   }
    tags = {
-    Name            = "SecurityGroup for Instance -BHost ${var.nac_scheduler_name}"
+    Name            = "nasuni-labs-SG-BHost-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
     Application     = "Nasuni Analytics Connector with Elasticsearch"
     Developer       = "Nasuni"
     PublicationType = "Nasuni Labs"
@@ -143,12 +141,10 @@ resource "aws_security_group" "BastionHost_SecurityGroup" {
   }
 }
 
-resource "aws_security_group" "nasunilabsSecurityGroup" {
-  name        = "nasuni-labs-ES-Strikers-SG-${random_id.unique_sg_id.dec}"
+resource "aws_security_group" "NACSchedulerSecurityGroup" {
+  name        = "nasuni-labs-SG-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
   description = "Allow adinistrators to access HTTP and SSH service in instance"
   vpc_id      = data.aws_vpc.VPCtoBeUsed.id
-
-
  # count = min(length(var.ingress_ports))
   ingress {
     from_port   = 22
@@ -183,7 +179,7 @@ resource "aws_security_group" "nasunilabsSecurityGroup" {
     cidr_blocks     = ["0.0.0.0/0"]
   }
    tags = {
-    Name            = "SecurityGroup for Instance : ${var.nac_scheduler_name}"
+    Name            = "nasuni-labs-SG-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
     Application     = "Nasuni Analytics Connector with Elasticsearch"
     Developer       = "Nasuni"
     PublicationType = "Nasuni Labs"
@@ -199,7 +195,24 @@ resource "null_resource" "update_secGrp" {
   depends_on = [aws_instance.NACScheduler]
 }
 
-
+resource "null_resource" "update_secGrp_bastion" {
+  count = var.use_private_ip != "Y" ? 0 : 1
+  provisioner "local-exec" {
+     command = "sh update_secGrp_BHost.sh ${var.use_private_ip} ${aws_instance.Bastion_NACScheduler[0].public_ip} ${var.nac_scheduler_name}_Bastion_Host ${data.aws_region.current.name} ${var.aws_profile}"
+  }
+    
+  provisioner "file" {
+    source          = "${var.pem_key_file}"
+    destination     = "~/${var.pem_key_file}"
+  }
+ connection {
+    type            = "ssh"
+    user            = "ubuntu"
+    host            = aws_instance.Bastion_NACScheduler[0].public_ip
+    private_key     = file("./${var.pem_key_file}")
+  }
+  depends_on = [aws_instance.Bastion_NACScheduler]
+}
 
 resource "null_resource" "NACScheduler_IP" {
   provisioner "local-exec" {
@@ -212,17 +225,12 @@ resource "null_resource" "aws_conf" {
   provisioner "local-exec" {
      command = "aws configure get aws_access_key_id --profile ${var.aws_profile} | xargs > awacck.txt && aws configure get aws_secret_access_key --profile ${var.aws_profile} | xargs > awsecck.txt"
   }
-  provisioner "local-exec" {
-    when    = destroy
-    command = "rm -rf *cck.txt"
-  }
 }
 
 data "local_file" "aws_conf_access_key" {
   filename   = "${path.cwd}/awacck.txt"
   depends_on = [null_resource.aws_conf]
 }
-
 
 data "local_file" "aws_conf_secret_key" {
   filename   = "${path.cwd}/awsecck.txt"
@@ -262,13 +270,16 @@ data "local_file" "aws_conf_secret_key" {
   }
 
   connection {
-    type        = "ssh"
-    # host        = aws_instance.NACScheduler.public_ip 
-    host = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
-    user        = "ubuntu"
-    private_key = file("./${var.pem_key_file}")
+    type                = "ssh"
+    host                = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
+    user                = "ubuntu"
+    private_key         = file("./${var.pem_key_file}")
+    # bastion_host        = var.use_private_ip != "Y" ? null : aws_instance.Bastion_NACScheduler[0].public_ip
+    bastion_host        = var.use_private_ip != "Y" ? null : aws_instance.Bastion_NACScheduler[0].public_ip
+    bastion_user        = "ubuntu"
+    bastion_private_key = file("./${var.pem_key_file}")
   }
-  depends_on = [null_resource.update_secGrp]
+  depends_on = [ null_resource.update_secGrp, null_resource.update_secGrp_bastion]
  }
 
 resource "null_resource" "Inatall_APACHE" {
@@ -296,11 +307,14 @@ resource "null_resource" "Inatall_APACHE" {
       ]
   }
   connection {
-    type        = "ssh"
-    # host        = aws_instance.NACScheduler.public_ip
-    host = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
-    user        = "ubuntu"
-    private_key = file("./${var.pem_key_file}")
+    type                = "ssh"
+    # host                = aws_instance.NACScheduler.public_ip
+    host                = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
+    user                = "ubuntu"
+    private_key         = file("./${var.pem_key_file}")
+    bastion_host        = var.use_private_ip != "Y" ? null : aws_instance.Bastion_NACScheduler[0].public_ip
+    bastion_user        = "ubuntu"
+    bastion_private_key = file("./${var.pem_key_file}")
   }
   depends_on = [null_resource.Inatall_Packages]
 }
@@ -309,6 +323,10 @@ resource "null_resource" "cleanup_temp_files" {
    provisioner "local-exec" {
     command = "echo . > awacck.txt && echo . > awsecck.txt"
   }
+  provisioner "local-exec" {
+      when    = destroy
+      command = "rm -rf *cck.txt"
+    }
    
   depends_on = [null_resource.Inatall_APACHE]
 }

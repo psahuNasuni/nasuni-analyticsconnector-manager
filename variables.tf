@@ -51,9 +51,9 @@ variable "subnet_availability_zone" {
 variable "use_private_ip" {
   default=""
 }
-variable "public_subnet_id" {
+variable "user_public_subnet_id" {
   default=""
 }
-variable "public_subnet_availability_zone" {
+variable "user_public_subnet_availability_zone" {
   default=""
 }
