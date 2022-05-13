@@ -64,7 +64,7 @@ depends_on = [
 }
 
 resource "aws_security_group" "nasunilabsSecurityGroup" {
-  name        = "nasuni-labs-ES-Strikers-SG-${random_id.unique_sg_id.dec}"
+  name        = "nasuni-labs-SG-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
   description = "Allow adinistrators to access HTTP and SSH service in instance"
   vpc_id      = data.aws_vpc.VPCtoBeUsed.id
 
@@ -103,7 +103,7 @@ resource "aws_security_group" "nasunilabsSecurityGroup" {
     cidr_blocks     = ["0.0.0.0/0"]
   }
    tags = {
-    Name            = "SecurityGroup for Instance : ${var.nac_scheduler_name}"
+    Name            = "nasuni-labs-SG-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
     Application     = "Nasuni Analytics Connector with Elasticsearch"
     Developer       = "Nasuni"
     PublicationType = "Nasuni Labs"
