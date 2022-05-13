@@ -60,6 +60,7 @@ resource "aws_instance" "NACScheduler" {
 depends_on = [
   data.local_file.aws_conf_access_key,
   data.local_file.aws_conf_secret_key,
+  aws_security_group.nasunilabsSecurityGroup
 ]
 }
 
@@ -123,7 +124,7 @@ resource "null_resource" "update_secGrp" {
 
 resource "null_resource" "NACScheduler_IP" {
   provisioner "local-exec" {
-    command = "echo ${aws_instance.NACScheduler.public_ip} > NACScheduler_IP.txt"
+    command = var.use_private_ip != "Y" ? "echo ${aws_instance.NACScheduler.public_ip} > NACScheduler_IP.txt" : "echo ${aws_instance.NACScheduler.private_ip} > NACScheduler_IP.txt"
   }
   depends_on = [aws_instance.NACScheduler]
 }
@@ -131,10 +132,6 @@ resource "null_resource" "NACScheduler_IP" {
 resource "null_resource" "aws_conf" {
   provisioner "local-exec" {
      command = "aws configure get aws_access_key_id --profile ${var.aws_profile} | xargs > awacck.txt && aws configure get aws_secret_access_key --profile ${var.aws_profile} | xargs > awsecck.txt"
-  }
-  provisioner "local-exec" {
-    when    = destroy
-    command = "rm -rf *cck.txt"
   }
 }
 
@@ -184,7 +181,6 @@ data "local_file" "aws_conf_secret_key" {
 
   connection {
     type        = "ssh"
-    # host        = aws_instance.NACScheduler.public_ip 
     host = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
     user        = "ubuntu"
     private_key = file("./${var.pem_key_file}")
@@ -230,10 +226,18 @@ resource "null_resource" "cleanup_temp_files" {
    provisioner "local-exec" {
     command = "echo . > awacck.txt && echo . > awsecck.txt"
   }
-   
+   provisioner "local-exec" {
+    when    = destroy
+    command = "rm -rf *cck.txt"
+  }
   depends_on = [null_resource.Inatall_APACHE]
 }
 
+locals {
+  NACScheduler-IP = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
+}
+
 output "Nasuni-SearchUI-Web-URL" {
-    value = var.use_private_ip != "Y" ? "http://${aws_instance.NACScheduler.public_ip}/index.html" : "http://${aws_instance.NACScheduler.private_ip}/index.html"
+    # value = var.use_private_ip != "Y" ? "http://${aws_instance.NACScheduler.public_ip}/index.html" : "http://${aws_instance.NACScheduler.private_ip}/index.html"
+  value = "http://${local.NACScheduler-IP}/index.html"
 }
