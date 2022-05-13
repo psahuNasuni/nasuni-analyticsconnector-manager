@@ -47,7 +47,7 @@ resource "aws_instance" "NACScheduler" {
   root_block_device {
     volume_size = var.volume_size
   }
-  vpc_security_group_ids = [ aws_security_group.nasunilabsSecurityGroup.id ]
+  vpc_security_group_ids = [ aws_security_group.NACSchedulerSecurityGroup.id ]
   tags = {
     Name            = var.nac_scheduler_name
     Application     = "Nasuni Analytics Connector with Elasticsearch"
@@ -60,11 +60,11 @@ resource "aws_instance" "NACScheduler" {
 depends_on = [
   data.local_file.aws_conf_access_key,
   data.local_file.aws_conf_secret_key,
-  aws_security_group.nasunilabsSecurityGroup
+  aws_security_group.NACSchedulerSecurityGroup
 ]
 }
 
-resource "aws_security_group" "nasunilabsSecurityGroup" {
+resource "aws_security_group" "NACSchedulerSecurityGroup" {
   name        = "nasuni-labs-SG-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
   description = "Allow adinistrators to access HTTP and SSH service in instance"
   vpc_id      = data.aws_vpc.VPCtoBeUsed.id
