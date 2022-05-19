@@ -197,6 +197,7 @@ resource "null_resource" "Inatall_APACHE" {
       "sudo ufw app list",
       "sudo ufw allow 'Apache'",
       "sudo service apache2 restart",
+      "sudo apt install dos2unix -y",
       "echo '@@@@@@@@@@@@@@@@@@@@@ FINISHED - Inastall WEB Server             @@@@@@@@@@@@@@@@@@@@@@@'",
       "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED  - Deployment of SearchUI Web Site @@@@@@@@@@@@@@@@@@@@@@@'",
       "git clone https://github.com/${var.github_organization}/${var.git_repo_ui}.git",
