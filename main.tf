@@ -152,7 +152,7 @@ data "local_file" "aws_conf_secret_key" {
       "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED - Inastall Packages @@@@@@@@@@@@@@@@@@@@@@@'",
       "sudo apt update",
       "sudo apt upgrade -y",
-      "sudo apt install dos2unix",
+      "sudo apt install dos2unix -y",
       "sudo apt install curl bash ca-certificates git openssl wget vim -y",
       "curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -",
       "sudo apt-add-repository \"deb [arch=$(dpkg --print-architecture)] https://apt.releases.hashicorp.com $(lsb_release -cs) main\"",
