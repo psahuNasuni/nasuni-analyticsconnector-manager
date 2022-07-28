@@ -207,7 +207,7 @@ resource "null_resource" "Inatall_APACHE" {
       "UI_TFVARS_FILE=ui_tfvars.tfvars",
       "AWS_REGION=$(aws configure get region --profile ${var.aws_profile})",
       "dos2unix create_aws_region_file.sh",
-      "sh create_aws_region_file.sh ${AWS_REGION} ${var.user_subnet_id} ${var.user_vpc_id} ${var.use_private_ip} ${UI_TFVARS_FILE} ${var.aws_profile} ${var.git_branch}",
+      "sh create_aws_region_file.sh $AWS_REGION ${var.user_subnet_id} ${var.user_vpc_id} ${var.use_private_ip} $UI_TFVARS_FILE ${var.aws_profile}",
       "terraform init",
       "terraform apply -var-file=$UI_TFVARS_FILE -auto-approve",
       "cd SearchUI_Web",
