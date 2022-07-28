@@ -51,3 +51,6 @@ variable "subnet_availability_zone" {
 variable "use_private_ip" {
   default=""
 }
+variable "git_branch" {
+  default=""
+}
