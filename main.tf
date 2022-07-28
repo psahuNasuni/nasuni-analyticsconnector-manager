@@ -34,7 +34,9 @@ data "aws_subnet" "example" {
  for_each = data.aws_subnet_ids.FetchingSubnetIDs.ids
  id  = each.value
 }
-
+locals {
+  SG_ID = "" == var.security_group_id ? aws_security_group.NAC_ES_SecurityGroup[0].id : var.security_group_id
+}
 resource "aws_instance" "NACScheduler" {
   ami = data.aws_ami.ubuntu.id
   availability_zone = var.subnet_availability_zone
@@ -47,7 +49,8 @@ resource "aws_instance" "NACScheduler" {
   root_block_device {
     volume_size = var.volume_size
   }
-  vpc_security_group_ids = [ aws_security_group.NACSchedulerSecurityGroup.id ]
+  # vpc_security_group_ids = [ aws_security_group.NACSchedulerSecurityGroup.id ]
+  vpc_security_group_ids = [ local.SG_ID ]
   tags = {
     Name            = var.nac_scheduler_name
     Application     = "Nasuni Analytics Connector with Elasticsearch"
@@ -64,13 +67,12 @@ depends_on = [
 ]
 }
 
-resource "aws_security_group" "NACSchedulerSecurityGroup" {
-  name        = "nasuni-labs-SG-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
+resource "aws_security_group" "NAC_ES_SecurityGroup" {
+  count       = "" == var.security_group_id ? 1 : 0
+  name        = "nasuni-labs-SG-${var.region}"
   description = "Allow adinistrators to access HTTP and SSH service in instance"
   vpc_id      = data.aws_vpc.VPCtoBeUsed.id
 
-
- # count = min(length(var.ingress_ports))
   ingress {
     from_port   = 22
     to_port     = 22
@@ -104,7 +106,7 @@ resource "aws_security_group" "NACSchedulerSecurityGroup" {
     cidr_blocks     = ["0.0.0.0/0"]
   }
    tags = {
-    Name            = "nasuni-labs-SG-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
+    Name            = "nasuni-labs-SG-${var.region}"
     Application     = "Nasuni Analytics Connector with Elasticsearch"
     Developer       = "Nasuni"
     PublicationType = "Nasuni Labs"
@@ -119,8 +121,6 @@ resource "null_resource" "update_secGrp" {
   }
   depends_on = [aws_instance.NACScheduler]
 }
-
-
 
 resource "null_resource" "NACScheduler_IP" {
   provisioner "local-exec" {
@@ -243,7 +243,5 @@ locals {
   NACScheduler-IP = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
 }
 
-output "Nasuni-SearchUI-Web-URL" {
-    # value = var.use_private_ip != "Y" ? "http://${aws_instance.NACScheduler.public_ip}/index.html" : "http://${aws_instance.NACScheduler.private_ip}/index.html"
-  value = "http://${local.NACScheduler-IP}/index.html"
-}
+
+  

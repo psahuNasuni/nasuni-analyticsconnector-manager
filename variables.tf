@@ -54,3 +54,8 @@ variable "use_private_ip" {
 variable "git_branch" {
   default=""
 }
+
+variable "security_group_id" {
+  type    = string
+  default = ""
+}
