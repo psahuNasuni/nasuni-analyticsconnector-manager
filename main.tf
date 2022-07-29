@@ -34,9 +34,7 @@ data "aws_subnet" "example" {
  for_each = data.aws_subnet_ids.FetchingSubnetIDs.ids
  id  = each.value
 }
-locals {
-  SG_ID = "" == var.security_group_id ? aws_security_group.NAC_ES_SecurityGroup[0].id : var.security_group_id
-}
+
 resource "aws_instance" "NACScheduler" {
   ami = data.aws_ami.ubuntu.id
   availability_zone = var.subnet_availability_zone
@@ -49,8 +47,7 @@ resource "aws_instance" "NACScheduler" {
   root_block_device {
     volume_size = var.volume_size
   }
-  # vpc_security_group_ids = [ aws_security_group.NACSchedulerSecurityGroup.id ]
-  vpc_security_group_ids = [ local.SG_ID ]
+  vpc_security_group_ids = [ var.security_group_id ]
   tags = {
     Name            = var.nac_scheduler_name
     Application     = "Nasuni Analytics Connector with Elasticsearch"
@@ -62,57 +59,8 @@ resource "aws_instance" "NACScheduler" {
 
 depends_on = [
   data.local_file.aws_conf_access_key,
-  data.local_file.aws_conf_secret_key,
-  aws_security_group.NACSchedulerSecurityGroup
+  data.local_file.aws_conf_secret_key
 ]
-}
-
-resource "aws_security_group" "NAC_ES_SecurityGroup" {
-  count       = "" == var.security_group_id ? 1 : 0
-  name        = "nasuni-labs-SG-${var.region}"
-  description = "Allow adinistrators to access HTTP and SSH service in instance"
-  vpc_id      = data.aws_vpc.VPCtoBeUsed.id
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
-  }
-
-    ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
-  }
-
-      ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
-  }
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
-  }
-  egress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
-    cidr_blocks     = ["0.0.0.0/0"]
-  }
-   tags = {
-    Name            = "nasuni-labs-SG-${var.region}"
-    Application     = "Nasuni Analytics Connector with Elasticsearch"
-    Developer       = "Nasuni"
-    PublicationType = "Nasuni Labs"
-    Version         = "V 0.1"
-
-  }
 }
 
 resource "null_resource" "update_secGrp" {
