@@ -47,7 +47,7 @@ resource "aws_instance" "NACScheduler" {
   root_block_device {
     volume_size = var.volume_size
   }
-  vpc_security_group_ids = [ var.security_group_id ]
+  vpc_security_group_ids = [ var.nac_es_securitygroup_id ]
   tags = {
     Name            = var.nac_scheduler_name
     Application     = "Nasuni Analytics Connector with Elasticsearch"
@@ -155,7 +155,7 @@ resource "null_resource" "Inatall_APACHE" {
       "UI_TFVARS_FILE=ui_tfvars.tfvars",
       "AWS_REGION=$(aws configure get region --profile ${var.aws_profile})",
       "dos2unix create_aws_region_file.sh",
-      "sh create_aws_region_file.sh $AWS_REGION ${var.user_subnet_id} ${var.user_vpc_id} ${var.use_private_ip} $UI_TFVARS_FILE ${var.aws_profile} ${var.security_group_id}",
+      "sh create_aws_region_file.sh $AWS_REGION ${var.user_subnet_id} ${var.user_vpc_id} ${var.use_private_ip} $UI_TFVARS_FILE ${var.aws_profile} ${var.nac_es_securitygroup_id}",
       "terraform init",
       "terraform apply -var-file=$UI_TFVARS_FILE -auto-approve",
       "cd SearchUI_Web",

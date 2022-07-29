@@ -55,7 +55,7 @@ variable "git_branch" {
   default=""
 }
 
-variable "security_group_id" {
+variable "nac_es_securitygroup_id" {
   type    = string
   default = ""
 }
