@@ -51,3 +51,11 @@ variable "subnet_availability_zone" {
 variable "use_private_ip" {
   default=""
 }
+variable "git_branch" {
+  default=""
+}
+
+variable "nac_es_securitygroup_id" {
+  type    = string
+  default = ""
+}

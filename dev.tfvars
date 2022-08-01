@@ -5,6 +5,8 @@ aws_profile="nasuni"
 nac_scheduler_name="NAC_SCHEDULER_BOX"
 pem_key_file="nv-pk.pem"
 aws_key="nv-pk"
+test="N"
+
 
 
 

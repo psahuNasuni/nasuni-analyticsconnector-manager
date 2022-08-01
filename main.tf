@@ -47,7 +47,7 @@ resource "aws_instance" "NACScheduler" {
   root_block_device {
     volume_size = var.volume_size
   }
-  vpc_security_group_ids = [ aws_security_group.NACSchedulerSecurityGroup.id ]
+  vpc_security_group_ids = [ var.nac_es_securitygroup_id ]
   tags = {
     Name            = var.nac_scheduler_name
     Application     = "Nasuni Analytics Connector with Elasticsearch"
@@ -59,58 +59,8 @@ resource "aws_instance" "NACScheduler" {
 
 depends_on = [
   data.local_file.aws_conf_access_key,
-  data.local_file.aws_conf_secret_key,
-  aws_security_group.NACSchedulerSecurityGroup
+  data.local_file.aws_conf_secret_key
 ]
-}
-
-resource "aws_security_group" "NACSchedulerSecurityGroup" {
-  name        = "nasuni-labs-SG-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
-  description = "Allow adinistrators to access HTTP and SSH service in instance"
-  vpc_id      = data.aws_vpc.VPCtoBeUsed.id
-
-
- # count = min(length(var.ingress_ports))
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
-  }
-
-    ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
-  }
-
-      ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
-  }
-  ingress {
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = [data.aws_vpc.VPCtoBeUsed.cidr_block]
-  }
-  egress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
-    cidr_blocks     = ["0.0.0.0/0"]
-  }
-   tags = {
-    Name            = "nasuni-labs-SG-${var.nac_scheduler_name}-${random_id.unique_sg_id.dec}"
-    Application     = "Nasuni Analytics Connector with Elasticsearch"
-    Developer       = "Nasuni"
-    PublicationType = "Nasuni Labs"
-    Version         = "V 0.1"
-
-  }
 }
 
 resource "null_resource" "update_secGrp" {
@@ -119,8 +69,6 @@ resource "null_resource" "update_secGrp" {
   }
   depends_on = [aws_instance.NACScheduler]
 }
-
-
 
 resource "null_resource" "NACScheduler_IP" {
   provisioner "local-exec" {
@@ -200,14 +148,14 @@ resource "null_resource" "Inatall_APACHE" {
       "sudo apt install dos2unix -y",
       "echo '@@@@@@@@@@@@@@@@@@@@@ FINISHED - Inastall WEB Server             @@@@@@@@@@@@@@@@@@@@@@@'",
       "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED  - Deployment of SearchUI Web Site @@@@@@@@@@@@@@@@@@@@@@@'",
-      "git clone https://github.com/${var.github_organization}/${var.git_repo_ui}.git",
+      "git clone -b ${var.git_branch} https://github.com/${var.github_organization}/${var.git_repo_ui}.git",
       "sudo chmod 755 ${var.git_repo_ui}/SearchUI_Web/*",
       "cd ${var.git_repo_ui}",
       "pwd",
       "UI_TFVARS_FILE=ui_tfvars.tfvars",
       "AWS_REGION=$(aws configure get region --profile ${var.aws_profile})",
       "dos2unix create_aws_region_file.sh",
-      "sh create_aws_region_file.sh $AWS_REGION ${var.user_subnet_id} ${var.user_vpc_id} ${var.use_private_ip} $UI_TFVARS_FILE ${var.aws_profile}",
+      "sh create_aws_region_file.sh $AWS_REGION ${var.user_subnet_id} ${var.user_vpc_id} ${var.use_private_ip} $UI_TFVARS_FILE ${var.aws_profile} ${var.nac_es_securitygroup_id}",
       "terraform init",
       "terraform apply -var-file=$UI_TFVARS_FILE -auto-approve",
       "cd SearchUI_Web",
@@ -243,7 +191,5 @@ locals {
   NACScheduler-IP = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
 }
 
-output "Nasuni-SearchUI-Web-URL" {
-    # value = var.use_private_ip != "Y" ? "http://${aws_instance.NACScheduler.public_ip}/index.html" : "http://${aws_instance.NACScheduler.private_ip}/index.html"
-  value = "http://${local.NACScheduler-IP}/index.html"
-}
+
+  
