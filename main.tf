@@ -111,7 +111,7 @@ data "local_file" "aws_conf_secret_key" {
       "sudo apt install jq -y",
       "sudo apt install zip -y",
       "sudo apt install unzip -y",
-      "sudo apt install python3 -y",
+      "sudo apt install python3.9 -y",
       "sudo apt install python3-pip -y",
       "sudo pip3 install boto3",
       "curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip'",
