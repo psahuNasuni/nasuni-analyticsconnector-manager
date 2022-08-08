@@ -113,6 +113,8 @@ data "local_file" "aws_conf_secret_key" {
       "sudo apt install unzip -y",
       "sudo apt install python3.9 -y",
       "sudo apt install python3-pip -y",
+      "alias python3='/usr/bin/python3.9'",
+      "alias pip3='python3.9 -m pip'",
       "sudo pip3 install boto3",
       "curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip'",
       "sudo unzip awscliv2.zip",
