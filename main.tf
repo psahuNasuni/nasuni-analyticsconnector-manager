@@ -1,4 +1,6 @@
+
 ##main
+
 # instances
 data "aws_ami" "ubuntu" {
   most_recent = true
@@ -113,6 +115,8 @@ data "local_file" "aws_conf_secret_key" {
       "sudo apt install unzip -y",
       "sudo apt install python3.9 -y",
       "sudo apt install python3-pip -y",
+      "alias python3='/usr/bin/python3.9'",
+      "alias pip3='python3.9 -m pip'",
       "sudo pip3 install boto3",
       "curl 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip' -o 'awscliv2.zip'",
       "sudo unzip awscliv2.zip",
@@ -155,14 +159,18 @@ resource "null_resource" "Inatall_APACHE" {
       "UI_TFVARS_FILE=ui_tfvars.tfvars",
       "AWS_REGION=$(aws configure get region --profile ${var.aws_profile})",
       "dos2unix create_aws_region_file.sh",
-      "sh create_aws_region_file.sh $AWS_REGION ${var.user_subnet_id} ${var.user_vpc_id} ${var.use_private_ip} $UI_TFVARS_FILE ${var.aws_profile} ${var.nac_es_securitygroup_id}",
+      "sh create_aws_region_file.sh $AWS_REGION ${var.user_subnet_id} ${var.user_vpc_id} ${var.use_private_ip} $UI_TFVARS_FILE ${var.aws_profile} ${var.nac_es_securitygroup_id} ${var.nac_scheduler_name}",
       "terraform init",
       "terraform apply -var-file=$UI_TFVARS_FILE -auto-approve",
-      "cd SearchUI_Web",
-      "sudo chmod 755 /var/www/html/*",
-      "sudo cp -a * /var/www/html/",
+      "sudo chmod -R 755 /var/www",
+      "sudo cp -r SearchUI_Web /var/www/.",
+      "sudo cp -r Tracker_UI /var/www/.",
+      "sudo rm -rf /var/www/html/index.html",
+      "sudo chmod 755 DeployNasuniWeb.sh",
+      "sudo ./DeployNasuniWeb.sh ",
       "sudo service apache2 restart",
-      "echo Nasuni ElasticSearch Web portal: http://$(curl checkip.amazonaws.com)/index.html",
+      "echo Nasuni ElasticSearch Web portal: http://$(curl checkip.amazonaws.com)/search/index.html",
+      "echo Nasuni ElasticSearch Tracker Web portal: http://$(curl checkip.amazonaws.com)/tracker/index.html",
       "echo '@@@@@@@@@@@@@@@@@@@@@ FINISHED - Deployment of SearchUI Web Site @@@@@@@@@@@@@@@@@@@@@@@'"
       ]
   }
