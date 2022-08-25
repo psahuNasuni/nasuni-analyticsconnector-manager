@@ -1,0 +1,34 @@
+Pre-Requisites: 
+    Terraform 
+    Git
+    For Windows:
+        GitBash
+    For Linux: 
+        Terminal
+Test Case (Happy Path):
+    1- Provision NAC EC2 instance using terraform in a private Subnet
+
+1- Steps to execute Unit Test
+    - Create NAC.tfvars file (Refer NAC.tfvars file for sample .tfvars file)
+    - Provide valid values for below Keys
+        region
+        aws_profile
+        pem_key_file
+        aws_key
+        nac_scheduler_name
+    - Execute the Shellscript as below:
+         ./provision_NAC_instance.sh NAC.tfvars >> UnitTestOS.log
+2- Observation (Open UnitTestNAC log file for observation): 
+    - Open AWS console in Browser
+    - navigate to AWS EC2 Instances
+    - Observe that the new instace is getting created with the name specified in NAC.tfvars
+    - Initial Status - Pending ... 
+    - Final Status - Running ...
+    - Outputs:
+        arn = "arn:<partition>:<service>:<region>:<account-id>:<resource-type>/<resource-id>"
+    	domain_id = "<account-id>/<resource-id>"
+	domain_name = "<resource-id>"
+	endpoint = "vpc-<resource-id>-<unique_id>.<region>.<service>.amazonaws.com"
+	kibana_endpoint = "vpc-<resource-id>-<unique_id>.<region>.<service>.amazonaws.com/_plugin/kibana/"
+
+
