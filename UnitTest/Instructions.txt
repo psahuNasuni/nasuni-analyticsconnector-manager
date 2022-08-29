@@ -26,9 +26,7 @@ Test Case (Happy Path):
     - Final Status - Running ...
     - Outputs:
         arn = "arn:<partition>:<service>:<region>:<account-id>:<resource-type>/<resource-id>"
-    	domain_id = "<account-id>/<resource-id>"
-	domain_name = "<resource-id>"
-	endpoint = "vpc-<resource-id>-<unique_id>.<region>.<service>.amazonaws.com"
-	kibana_endpoint = "vpc-<resource-id>-<unique_id>.<region>.<service>.amazonaws.com/_plugin/kibana/"
-
+    	aws_instance.NACScheduler: Creation complete after <time_taken> [id=<random_id>]
+	Nasuni ElasticSearch Web portal: http://<NAC_SCHEDULER_IP>/search/index.html
+	Nasuni ElasticSearch Tracker Web portal: http://<NAC_SCHEDULER_IP>/tracker/index.html
 
