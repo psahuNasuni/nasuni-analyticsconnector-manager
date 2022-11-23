@@ -1,6 +1,8 @@
 
 ##main
-
+locals{
+git_repo_ui = var.use_private_ip != "Y" ? "nasuni-opensearch-userinterface-public" : "nasuni-opensearch-userinterface" 
+}
 # instances
 data "aws_ami" "ubuntu" {
   most_recent = true
@@ -152,9 +154,9 @@ resource "null_resource" "Inatall_APACHE" {
       "sudo apt install dos2unix -y",
       "echo '@@@@@@@@@@@@@@@@@@@@@ FINISHED - Inastall WEB Server             @@@@@@@@@@@@@@@@@@@@@@@'",
       "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED  - Deployment of SearchUI Web Site @@@@@@@@@@@@@@@@@@@@@@@'",
-      "git clone -b ${var.git_branch} https://github.com/${var.github_organization}/${var.git_repo_ui}.git",
-      "sudo chmod 755 ${var.git_repo_ui}/SearchUI_Web/*",
-      "cd ${var.git_repo_ui}",
+      "git clone -b ${var.git_branch} https://github.com/${var.github_organization}/${local.git_repo_ui}.git",
+      "sudo chmod 755 ${local.git_repo_ui}/SearchUI_Web/*",
+      "cd ${local.git_repo_ui}",
       "pwd",
       "UI_TFVARS_FILE=ui_tfvars.tfvars",
       "AWS_REGION=$(aws configure get region --profile ${var.aws_profile})",
