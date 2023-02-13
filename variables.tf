@@ -42,7 +42,7 @@ variable "user_vpc_id" {
   default=""
 }
 
-variable "is_kendra" {
+variable "service_name" {
   default=""
 }
 
