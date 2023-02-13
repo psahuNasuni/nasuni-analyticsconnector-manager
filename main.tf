@@ -143,6 +143,7 @@ data "local_file" "aws_conf_secret_key" {
  }
 
 resource "null_resource" "Inatall_APACHE" {
+  count = var.is_kendra == "Y" ? 0 : 1
  provisioner "remote-exec" {
     inline = [
       "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED - Inastall WEB Server            @@@@@@@@@@@@@@@@@@@@@@@'",
@@ -194,7 +195,7 @@ resource "null_resource" "cleanup_temp_files" {
     when    = destroy
     command = "rm -rf *cck.txt"
   }
-  depends_on = [null_resource.Inatall_APACHE]
+  #depends_on = [null_resource.Inatall_APACHE]
 }
 
 locals {
