@@ -187,6 +187,45 @@ resource "null_resource" "Inatall_APACHE" {
   depends_on = [null_resource.Inatall_Packages]
 }
 
+resource "null_resource" "Inatall_APACHE_Kendra" {
+  count = var.service_name == "KENDRA" ? 1 : 0
+ provisioner "remote-exec" {
+    inline = [
+      "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED - Inastall WEB Server            @@@@@@@@@@@@@@@@@@@@@@@'",
+      "sudo apt update",
+      "sudo apt install apache2 -y",
+      "sudo ufw app list",
+      "sudo ufw allow 'Apache'",
+      "sudo service apache2 restart",
+      "sudo apt install dos2unix -y",
+      "echo '@@@@@@@@@@@@@@@@@@@@@ FINISHED - Inastall WEB Server             @@@@@@@@@@@@@@@@@@@@@@@'",
+      "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED  - Deployment of SearchUI Web Site @@@@@@@@@@@@@@@@@@@@@@@'",
+      "git clone -b ${var.git_branch} https://github.com/${var.github_organization}/${local.git_repo_ui}.git",
+      "sudo chmod 755 ${local.git_repo_ui}/SearchUI_Web/*",
+      "cd ${local.git_repo_ui}",
+      "pwd",
+      "sudo chmod -R 755 /var/www",
+      "sudo cp -r SearchUI_Web /var/www/.",
+      "sudo cp -r Tracker_UI /var/www/.",
+      "sudo rm -rf /var/www/html/index.html",
+      "sudo chmod 755 DeployNasuniWeb.sh",
+      "sudo ./DeployNasuniWeb.sh ",
+      "sudo service apache2 restart",
+      "echo Nasuni ElasticSearch Web portal: http://$(curl checkip.amazonaws.com)/search/index.html",
+      "echo Nasuni ElasticSearch Tracker Web portal: http://$(curl checkip.amazonaws.com)/tracker/index.html",
+      "echo '@@@@@@@@@@@@@@@@@@@@@ FINISHED - Deployment of SearchUI Web Site @@@@@@@@@@@@@@@@@@@@@@@'"
+      ]
+  }
+  connection {
+    type        = "ssh"
+    # host        = aws_instance.NACScheduler.public_ip
+    host = var.use_private_ip != "Y" ? aws_instance.NACScheduler.public_ip : aws_instance.NACScheduler.private_ip
+    user        = "ubuntu"
+    private_key = file("./${var.pem_key_file}")
+  }
+  depends_on = [null_resource.Inatall_Packages]
+}
+
 resource "null_resource" "cleanup_temp_files" {
    provisioner "local-exec" {
     command = "echo . > awacck.txt && echo . > awsecck.txt"
