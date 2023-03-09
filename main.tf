@@ -166,13 +166,11 @@ resource "null_resource" "Inatall_APACHE" {
       "terraform init",
       "terraform apply -var-file=$UI_TFVARS_FILE -auto-approve",
       "sudo chmod -R 755 /var/www",
-      "sudo cp -r SearchUI_Web /var/www/.",
       "sudo cp -r Tracker_UI /var/www/.",
       "sudo rm -rf /var/www/html/index.html",
       "sudo chmod 755 DeployNasuniWeb.sh",
       "sudo ./DeployNasuniWeb.sh ",
       "sudo service apache2 restart",
-      "echo Nasuni ElasticSearch Web portal: http://$(curl checkip.amazonaws.com)/search/index.html",
       "echo Nasuni ElasticSearch Tracker Web portal: http://$(curl checkip.amazonaws.com)/tracker/index.html",
       "echo '@@@@@@@@@@@@@@@@@@@@@ FINISHED - Deployment of SearchUI Web Site @@@@@@@@@@@@@@@@@@@@@@@'"
       ]
