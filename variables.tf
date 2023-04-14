@@ -42,6 +42,10 @@ variable "user_vpc_id" {
   default=""
 }
 
+variable "service_name" {
+  default=""
+}
+
 variable "user_subnet_id" {
   default=""
 }

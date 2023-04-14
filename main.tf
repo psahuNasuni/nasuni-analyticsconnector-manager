@@ -143,6 +143,7 @@ data "local_file" "aws_conf_secret_key" {
  }
 
 resource "null_resource" "Inatall_APACHE" {
+  #count = var.service_name == "KENDRA" ? 0 : 1
  provisioner "remote-exec" {
     inline = [
       "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED - Inastall WEB Server            @@@@@@@@@@@@@@@@@@@@@@@'",
@@ -154,26 +155,6 @@ resource "null_resource" "Inatall_APACHE" {
       "sudo apt install dos2unix -y",
       "echo '@@@@@@@@@@@@@@@@@@@@@ FINISHED - Inastall WEB Server             @@@@@@@@@@@@@@@@@@@@@@@'",
       "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED  - Deployment of SearchUI Web Site @@@@@@@@@@@@@@@@@@@@@@@'",
-      "git clone -b ${var.git_branch} https://github.com/${var.github_organization}/${local.git_repo_ui}.git",
-      "sudo chmod 755 ${local.git_repo_ui}/SearchUI_Web/*",
-      "cd ${local.git_repo_ui}",
-      "pwd",
-      "UI_TFVARS_FILE=ui_tfvars.tfvars",
-      "AWS_REGION=$(aws configure get region --profile ${var.aws_profile})",
-      "dos2unix create_aws_region_file.sh",
-      "sh create_aws_region_file.sh $AWS_REGION ${var.user_subnet_id} ${var.user_vpc_id} ${var.use_private_ip} $UI_TFVARS_FILE ${var.aws_profile} ${var.nac_es_securitygroup_id} ${var.nac_scheduler_name}",
-      "terraform init",
-      "terraform apply -var-file=$UI_TFVARS_FILE -auto-approve",
-      "sudo chmod -R 755 /var/www",
-      "sudo cp -r SearchUI_Web /var/www/.",
-      "sudo cp -r Tracker_UI /var/www/.",
-      "sudo rm -rf /var/www/html/index.html",
-      "sudo chmod 755 DeployNasuniWeb.sh",
-      "sudo ./DeployNasuniWeb.sh ",
-      "sudo service apache2 restart",
-      "echo Nasuni ElasticSearch Web portal: http://$(curl checkip.amazonaws.com)/search/index.html",
-      "echo Nasuni ElasticSearch Tracker Web portal: http://$(curl checkip.amazonaws.com)/tracker/index.html",
-      "echo '@@@@@@@@@@@@@@@@@@@@@ FINISHED - Deployment of SearchUI Web Site @@@@@@@@@@@@@@@@@@@@@@@'"
       ]
   }
   connection {
@@ -194,7 +175,7 @@ resource "null_resource" "cleanup_temp_files" {
     when    = destroy
     command = "rm -rf *cck.txt"
   }
-  depends_on = [null_resource.Inatall_APACHE]
+  #depends_on = [null_resource.Inatall_APACHE]
 }
 
 locals {
