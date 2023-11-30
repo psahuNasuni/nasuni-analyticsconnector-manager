@@ -112,6 +112,7 @@ data "local_file" "aws_conf_secret_key" {
       "sudo apt install terraform",
       "terraform -v",
       "which terraform",
+      "echo @@@@@@@@@@@ terraform Installed @@@@@@@@@",
       "sudo apt install jq -y",
       "sudo apt install zip -y",
       "sudo apt install unzip -y",
@@ -143,7 +144,7 @@ data "local_file" "aws_conf_secret_key" {
  }
 
 resource "null_resource" "Inatall_APACHE" {
-count = var.service_name == "EXP" ? 0 : 1
+  #count = var.service_name == "KENDRA" ? 0 : 1
  provisioner "remote-exec" {
     inline = [
       "echo '@@@@@@@@@@@@@@@@@@@@@ STARTED - Inastall WEB Server            @@@@@@@@@@@@@@@@@@@@@@@'",
